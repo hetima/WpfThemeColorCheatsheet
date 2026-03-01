@@ -182,18 +182,47 @@ class Generator:
         }}
 
         #search-input {{
-            flex: 1;
-            max-width: 400px;
-            padding: 10px 16px;
+            width: 100%;
+            padding: 10px 36px 10px 16px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
+            box-sizing: border-box;
         }}
 
         #search-input:focus {{
             border-color: #0078d4;
+        }}
+
+        .search-container {{
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }}
+
+        .clear-btn {{
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+        }}
+
+        .clear-btn:hover {{
+            color: #666;
         }}
 
         .sort-buttons {{
@@ -221,6 +250,18 @@ class Generator:
             background-color: #0078d4;
             color: #fff;
             border-color: #0078d4;
+        }}
+
+        .github-link {{
+            font-size: 12px;
+            color: #666;
+            text-decoration: none;
+            margin-left: 16px;
+            transition: color 0.2s;
+        }}
+
+        .github-link:hover {{
+            color: #0078d4;
         }}
 
         main {{
@@ -348,11 +389,15 @@ class Generator:
 <body>
     <header>
         <h1>WPF Theme Color Cheatsheet</h1>
-        <input type="text" id="search-input" placeholder="Search Brushes..." />
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search Brushes..." />
+            <button class="clear-btn" id="clear-btn" title="Clear">×</button>
+        </div>
         <div class="sort-buttons">
             <button class="sort-btn active" id="sort-name" data-sort="name">Sort by Name</button>
             <button class="sort-btn" id="sort-color" data-sort="color">Sort by Color</button>
         </div>
+        <a href="https://github.com/hetima/WpfThemeColorCheatsheet" class="github-link" target="_blank" rel="noopener noreferrer">GitHub</a>
     </header>
 
     <main>
@@ -364,6 +409,33 @@ class Generator:
     <script>
         const brushes = {brushes_json};
         let currentSort = 'name';
+
+        // 検索入力とクリアボタンの設定
+        const searchInput = document.getElementById('search-input');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // 入力値に応じてクリアボタンの表示/非表示を切り替え
+        searchInput.addEventListener('input', (e) => {{
+            clearBtn.style.display = searchInput.value ? 'flex' : 'none';
+            renderBrushes(searchInput.value);
+        }});
+
+        // クリアボタンクリックで検索をクリア
+        clearBtn.addEventListener('click', () => {{
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            renderBrushes();
+            searchInput.focus();
+        }});
+
+        // ESCキーで検索をクリア
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape' && searchInput.value) {{
+                searchInput.value = '';
+                clearBtn.style.display = 'none';
+                renderBrushes();
+            }}
+        }});
 
         function createBrushCard(name, lightValue, darkValue, lightValueHtml, darkValueHtml, lightAlpha, darkAlpha) {{
             const card = document.createElement('div');
@@ -532,11 +604,6 @@ class Generator:
                 container.appendChild(card);
             }});
         }}
-
-        // 検索入力のイベントリスナー
-        document.getElementById('search-input').addEventListener('input', (e) => {{
-            renderBrushes(e.target.value);
-        }});
 
         // ソートボタンのイベントリスナー
         document.querySelectorAll('.sort-btn').forEach(btn => {{
