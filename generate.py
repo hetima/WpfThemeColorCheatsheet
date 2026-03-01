@@ -37,10 +37,8 @@ class Xaml:
                 match = re.search(r'StaticResource\s+(\w+)', color_attr)
                 if match:
                     color_key = match.group(1)
-                    # color辞書から値を取得
-                    color_value = self.colors.get(color_key)
-                    if color_value:
-                        self.color_brushes[name] = color_value
+                    # color_keyをそのまま格納
+                    self.color_brushes[name] = color_key
 
 
 
@@ -111,9 +109,13 @@ class Generator:
 
     def construct_brushes(self):
         """light_xamlのcolor_brushesをループして、lightとdarkの値を持つ辞書を作成する"""
-        for name, light_value in self.light_xaml.color_brushes.items():
+        for name, light_color_key in self.light_xaml.color_brushes.items():
             # dark_xamlから同名のキーの値を取得
-            dark_value = self.dark_xaml.color_brushes.get(name)
+            dark_color_key = self.dark_xaml.color_brushes.get(name)
+
+            # color_keyから色の値を取得
+            light_value = self.light_xaml.colors.get(light_color_key)
+            dark_value = self.dark_xaml.colors.get(dark_color_key) if dark_color_key else None
 
             # HTML用のrgba形式に変換
             light_rgba, light_alpha = self.hex_to_rgba(light_value)
