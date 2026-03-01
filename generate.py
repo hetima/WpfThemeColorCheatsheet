@@ -51,6 +51,7 @@ class Generator:
         self.light_xaml = Xaml("Light.xaml")
         self.dark_xaml = Xaml("Dark.xaml")
         self.brushes = {}
+        self.colors = {}
 
     def hex_to_rgba(self, hex_color):
         """C#の色指定（#RRGGBB または #AARRGGBB）をrgba形式に変換する"""
@@ -131,9 +132,33 @@ class Generator:
                 "light_brightness": light_brightness
             }
 
+    def construct_colors(self):
+        """light_xamlのcolorsをループして、lightとdarkの値を持つ辞書を作成する"""
+        for name, light_value in self.light_xaml.colors.items():
+            # dark_xamlから同名のキーの値を取得
+            dark_value = self.dark_xaml.colors.get(name)
+
+            # HTML用のrgba形式に変換
+            light_rgba, light_alpha = self.hex_to_rgba(light_value)
+            dark_rgba, dark_alpha = self.hex_to_rgba(dark_value)
+
+            # Lightテーマの色の明るさを計算
+            light_brightness = self.calculate_brightness(light_value)
+
+            self.colors[name] = {
+                "light_value": light_value,
+                "dark_value": dark_value,
+                "light_value_html": light_rgba,
+                "dark_value_html": dark_rgba,
+                "light_alpha": light_alpha,
+                "dark_alpha": dark_alpha,
+                "light_brightness": light_brightness
+            }
+
     def run(self):
         """メイン処理を実行"""
         self.construct_brushes()
+        self.construct_colors()
         self.generate_html()
 
     def generate_html(self):
@@ -241,7 +266,7 @@ class Generator:
 
         .sort-buttons {{
             display: flex;
-            gap: 8px;
+            gap: 0;
             margin-left: 16px;
         }}
 
@@ -253,6 +278,17 @@ class Generator:
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s;
+        }}
+
+        .sort-btn:first-child {{
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }}
+
+        .sort-btn:last-child {{
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: none;
         }}
 
         .sort-btn:hover {{
