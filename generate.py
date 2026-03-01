@@ -142,7 +142,7 @@ class Generator:
         brushes_json = json.dumps(self.brushes)
 
         html_content = f'''<!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
