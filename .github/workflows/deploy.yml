@@ -1,4 +1,4 @@
-name: Generate and Deploy Fluent Icons Cheatsheet
+name: Generate and Deploy Html
 
 on:
   push:
