@@ -1,10 +1,11 @@
 # WPF Theme Color Cheatsheet
 
-A visual reference guide for Windows Presentation Foundation (WPF) theme colors, displaying all available brushes in both Light and Dark themes.
+A visual reference guide for Windows WPF app theme colors, displaying all available brushes in both Light and Dark themes.
+
+[WPF Theme Color Cheatsheet](https://hetima.github.io/WpfThemeColorCheatsheet/)
 
 ## Features
 
-- **423 Theme Brushes**: Complete collection of WPF theme color brushes
 - **Dual Theme Support**: View colors in both Light and Dark themes
 - **Color Preview**: Visual color boxes with HEX values and opacity percentages
 - **Search & Filter**: Real-time search by brush name or opacity (e.g., `>30`, `<50`, `100`)
@@ -14,7 +15,7 @@ A visual reference guide for Windows Presentation Foundation (WPF) theme colors,
 
 ## Usage
 
-1. Open `index.html` in your browser
+1. Open [WPF Theme Color Cheatsheet](https://hetima.github.io/WpfThemeColorCheatsheet/) in your browser
 2. Use the search bar to filter brushes by name or opacity
 3. Click sort buttons to reorder brushes
 4. Click any brush card to copy its name to clipboard
