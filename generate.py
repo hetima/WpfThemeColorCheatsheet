@@ -165,6 +165,8 @@ class Generator:
         """index.htmlを生成する"""
         # brushesデータをJSONに変換
         brushes_json = json.dumps(self.brushes)
+        # colorsデータをJSONに変換
+        colors_json = json.dumps(self.colors)
 
         html_content = f'''<!DOCTYPE html>
 <html lang="en">
@@ -297,6 +299,44 @@ class Generator:
         }}
 
         .sort-btn.active {{
+            background-color: #0078d4;
+            color: #fff;
+            border-color: #0078d4;
+        }}
+
+        .dataset-toggle {{
+            display: flex;
+            gap: 0;
+            margin-left: 16px;
+        }}
+
+        .dataset-btn {{
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .dataset-btn:first-child {{
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }}
+
+        .dataset-btn:last-child {{
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: none;
+        }}
+
+        .dataset-btn:hover {{
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }}
+
+        .dataset-btn.active {{
             background-color: #0078d4;
             color: #fff;
             border-color: #0078d4;
@@ -468,6 +508,10 @@ class Generator:
                 <input type="text" id="search-input" placeholder="Search Brushes..." />
                 <button class="clear-btn" id="clear-btn" title="Clear">×</button>
             </div>
+            <div class="dataset-toggle">
+                <button class="dataset-btn active" id="dataset-brushes" data-dataset="brushes">Brushes</button>
+                <button class="dataset-btn" id="dataset-colors" data-dataset="colors">Colors</button>
+            </div>
             <div class="sort-buttons">
                 <button class="sort-btn active" id="sort-name" data-sort="name">Sort by Name</button>
                 <button class="sort-btn" id="sort-color" data-sort="color">Sort by Color</button>
@@ -487,7 +531,9 @@ class Generator:
 
     <script>
         const brushes = {brushes_json};
+        const colors = {colors_json};
         let currentSort = 'name';
+        let currentDataset = 'brushes';
 
         // 検索入力とクリアボタンの設定
         const searchInput = document.getElementById('search-input');
@@ -613,7 +659,10 @@ class Generator:
             const container = document.getElementById('grid-container');
             container.innerHTML = '';
 
-            let filteredBrushes = Object.entries(brushes).filter(([name, values]) => {{
+            // 現在のデータセットを取得
+            const currentData = currentDataset === 'brushes' ? brushes : colors;
+
+            let filteredBrushes = Object.entries(currentData).filter(([name, values]) => {{
                 // 名前での検索
                 if (name.toLowerCase().includes(filterText.toLowerCase())) {{
                     return true;
@@ -667,7 +716,7 @@ class Generator:
             if (filteredBrushes.length === 0) {{
                 const noResults = document.createElement('div');
                 noResults.className = 'no-results';
-                noResults.textContent = 'No matching brushes found';
+                noResults.textContent = 'No matching items found';
                 container.appendChild(noResults);
                 return;
             }}
@@ -685,6 +734,26 @@ class Generator:
                 container.appendChild(card);
             }});
         }}
+
+        // データセット切り替えボタンのイベントリスナー
+        document.querySelectorAll('.dataset-btn').forEach(btn => {{
+            btn.addEventListener('click', (e) => {{
+                const datasetType = e.target.dataset.dataset;
+                currentDataset = datasetType;
+
+                // アクティブクラスの切り替え
+                document.querySelectorAll('.dataset-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // 検索プレースホルダーを更新
+                const searchInput = document.getElementById('search-input');
+                searchInput.placeholder = currentDataset === 'brushes' ? 'Search Brushes...' : 'Search Colors...';
+
+                // 再描画
+                const searchText = searchInput.value;
+                renderBrushes(searchText);
+            }});
+        }});
 
         // ソートボタンのイベントリスナー
         document.querySelectorAll('.sort-btn').forEach(btn => {{
