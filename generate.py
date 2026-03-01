@@ -75,6 +75,39 @@ class Generator:
         rgba_value = f'rgba({r}, {g}, {b}, {a:.3f})'
         return rgba_value, a
 
+    def calculate_brightness(self, hex_color):
+        """色の明るさを計算する（輝度公式を使用）"""
+        if not hex_color or len(hex_color) < 7:
+            return 0
+
+        hex_color = hex_color.strip()
+
+        if len(hex_color) == 9:  # #AARRGGBB（透明色）
+            # 透明色の場合、背景色（#FAFAFA）と合成
+            alpha = int(hex_color[1:3], 16) / 255
+            fg_r = int(hex_color[3:5], 16)
+            fg_g = int(hex_color[5:7], 16)
+            fg_b = int(hex_color[7:9], 16)
+
+            # 背景色 #FAFAFA (RGB: 250, 250, 250)
+            bg_r = 250
+            bg_g = 250
+            bg_b = 250
+
+            # Alpha Blending: result = foreground * alpha + background * (1 - alpha)
+            r = fg_r * alpha + bg_r * (1 - alpha)
+            g = fg_g * alpha + bg_g * (1 - alpha)
+            b = fg_b * alpha + bg_b * (1 - alpha)
+        elif len(hex_color) == 7:  # #RRGGBB
+            r = int(hex_color[1:3], 16)
+            g = int(hex_color[3:5], 16)
+            b = int(hex_color[5:7], 16)
+        else:
+            return 0
+
+        # 輝度公式: 0.299*R + 0.587*G + 0.114*B
+        return 0.299 * r + 0.587 * g + 0.114 * b
+
     def construct_brushes(self):
         """light_xamlのcolor_brushesをループして、lightとdarkの値を持つ辞書を作成する"""
         for name, light_value in self.light_xaml.color_brushes.items():
@@ -85,13 +118,17 @@ class Generator:
             light_rgba, light_alpha = self.hex_to_rgba(light_value)
             dark_rgba, dark_alpha = self.hex_to_rgba(dark_value)
 
+            # Lightテーマの色の明るさを計算
+            light_brightness = self.calculate_brightness(light_value)
+
             self.brushes[name] = {
                 "light_value": light_value,
                 "dark_value": dark_value,
                 "light_value_html": light_rgba,
                 "dark_value_html": dark_rgba,
                 "light_alpha": light_alpha,
-                "dark_alpha": dark_alpha
+                "dark_alpha": dark_alpha,
+                "light_brightness": light_brightness
             }
 
     def run(self):
@@ -328,25 +365,6 @@ class Generator:
         const brushes = {brushes_json};
         let currentSort = 'name';
 
-        // 色の明るさを計算する関数（輝度公式を使用）
-        function getBrightness(hexColor) {{
-            // #AARRGGBB または #RRGGBB 形式を解析
-            let r, g, b;
-            if (hexColor.length === 9) {{
-                r = parseInt(hexColor.substring(3, 5), 16);
-                g = parseInt(hexColor.substring(5, 7), 16);
-                b = parseInt(hexColor.substring(7, 9), 16);
-            }} else if (hexColor.length === 7) {{
-                r = parseInt(hexColor.substring(1, 3), 16);
-                g = parseInt(hexColor.substring(3, 5), 16);
-                b = parseInt(hexColor.substring(5, 7), 16);
-            }} else {{
-                return 0;
-            }}
-            // 輝度公式: 0.299*R + 0.587*G + 0.114*B
-            return 0.299 * r + 0.587 * g + 0.114 * b;
-        }}
-
         function createBrushCard(name, lightValue, darkValue, lightValueHtml, darkValueHtml, lightAlpha, darkAlpha) {{
             const card = document.createElement('div');
             card.className = 'brush-card';
@@ -451,16 +469,16 @@ class Generator:
                 filteredBrushes.sort((a, b) => a[0].localeCompare(b[0]));
             }} else if (currentSort === 'color') {{
                 filteredBrushes.sort((a, b) => {{
-                    const brightnessA = getBrightness(a[1].light_value);
-                    const brightnessB = getBrightness(b[1].light_value);
-                    return brightnessA - brightnessB;
+                    const brightnessA = a[1].light_brightness;
+                    const brightnessB = b[1].light_brightness;
+                    return brightnessB - brightnessA;
                 }});
             }}
 
             if (filteredBrushes.length === 0) {{
                 const noResults = document.createElement('div');
                 noResults.className = 'no-results';
-                noResults.textContent = '該当するブラシが見つかりません';
+                noResults.textContent = 'No matching brushes found';
                 container.appendChild(noResults);
                 return;
             }}
