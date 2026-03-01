@@ -229,25 +229,53 @@ class Generator:
             display: flex;
             flex-direction: column;
             gap: 4px;
+            padding: 8px;
+            border-radius: 4px;
+        }}
+
+        .color-item.light {{
+            background-color: #FAFAFA;
+        }}
+
+        .color-item.dark {{
+            background-color: #202020;
         }}
 
         .color-box {{
             height: 60px;
             border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .color-overlay {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }}
 
         .color-value {{
             font-size: 11px;
             font-family: monospace;
-            color: #333;
+            color: #222;
             text-align: center;
             word-break: break-all;
         }}
 
         .color-label {{
             font-size: 11px;
-            color: #666;
+            color: #222;
             text-align: center;
+        }}
+
+        .color-item.dark .color-label {{
+            color: #EEE;
+        }}
+
+        .color-item.dark .color-value {{
+            color: #EEE;
         }}
 
         .no-results {{
@@ -332,7 +360,7 @@ class Generator:
 
             // Light theme color item
             const lightItem = document.createElement('div');
-            lightItem.className = 'color-item';
+            lightItem.className = 'color-item light';
 
             const lightValueText = document.createElement('div');
             lightValueText.className = 'color-value';
@@ -341,7 +369,12 @@ class Generator:
 
             const lightBox = document.createElement('div');
             lightBox.className = 'color-box';
-            lightBox.style.backgroundColor = lightValueHtml;
+
+            const lightOverlay = document.createElement('div');
+            lightOverlay.className = 'color-overlay';
+            lightOverlay.style.backgroundColor = lightValueHtml;
+
+            lightBox.appendChild(lightOverlay);
 
             const lightLabel = document.createElement('div');
             lightLabel.className = 'color-label';
@@ -353,7 +386,7 @@ class Generator:
 
             // Dark theme color item
             const darkItem = document.createElement('div');
-            darkItem.className = 'color-item';
+            darkItem.className = 'color-item dark';
 
             const darkValueText = document.createElement('div');
             darkValueText.className = 'color-value';
@@ -362,7 +395,12 @@ class Generator:
 
             const darkBox = document.createElement('div');
             darkBox.className = 'color-box';
-            darkBox.style.backgroundColor = darkValueHtml;
+
+            const darkOverlay = document.createElement('div');
+            darkOverlay.className = 'color-overlay';
+            darkOverlay.style.backgroundColor = darkValueHtml;
+
+            darkBox.appendChild(darkOverlay);
 
             const darkLabel = document.createElement('div');
             darkLabel.className = 'color-label';
