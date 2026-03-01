@@ -157,7 +157,7 @@ class Generator:
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f5;
-            padding-top: 80px;
+            padding-top: 100px;
         }}
 
         header {{
@@ -165,20 +165,33 @@ class Generator:
             top: 0;
             left: 0;
             right: 0;
-            height: 70px;
             background-color: #ffffff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 12px 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }}
+
+        .header-top {{
             display: flex;
             align-items: center;
-            padding: 0 24px;
-            z-index: 1000;
+            justify-content: space-between;
+        }}
+
+        .header-bottom {{
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
         }}
 
         h1 {{
             font-size: 20px;
             font-weight: 600;
             color: #333;
-            margin-right: 24px;
+            margin: 0;
         }}
 
         #search-input {{
@@ -199,7 +212,8 @@ class Generator:
         .search-container {{
             position: relative;
             flex: 1;
-            max-width: 400px;
+            max-width: 480px;
+            min-width: 200px;
         }}
 
         .clear-btn {{
@@ -262,6 +276,27 @@ class Generator:
 
         .github-link:hover {{
             color: #0078d4;
+        }}
+
+        .copy-checkbox {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 16px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }}
+
+        .copy-checkbox input {{
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }}
+
+        .copy-checkbox span {{
+            white-space: nowrap;
         }}
 
         main {{
@@ -388,16 +423,24 @@ class Generator:
 </head>
 <body>
     <header>
-        <h1>WPF Theme Color Cheatsheet</h1>
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search Brushes..." />
-            <button class="clear-btn" id="clear-btn" title="Clear">×</button>
+        <div class="header-top">
+            <h1>WPF Theme Color Cheatsheet</h1>
+            <a href="https://github.com/hetima/WpfThemeColorCheatsheet" class="github-link" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
-        <div class="sort-buttons">
-            <button class="sort-btn active" id="sort-name" data-sort="name">Sort by Name</button>
-            <button class="sort-btn" id="sort-color" data-sort="color">Sort by Color</button>
+        <div class="header-bottom">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search Brushes..." />
+                <button class="clear-btn" id="clear-btn" title="Clear">×</button>
+            </div>
+            <div class="sort-buttons">
+                <button class="sort-btn active" id="sort-name" data-sort="name">Sort by Name</button>
+                <button class="sort-btn" id="sort-color" data-sort="color">Sort by Color</button>
+            </div>
+            <label class="copy-checkbox">
+                <input type="checkbox" id="copy-dynamic-resource" />
+                <span>Copy as {{DynamicResource Name}}</span>
+            </label>
         </div>
-        <a href="https://github.com/hetima/WpfThemeColorCheatsheet" class="github-link" target="_blank" rel="noopener noreferrer">GitHub</a>
     </header>
 
     <main>
@@ -508,8 +551,10 @@ class Generator:
 
             // クリックでクリップボードにコピー
             card.addEventListener('click', () => {{
-                navigator.clipboard.writeText(name).then(() => {{
-                    showToast(`"${{name}}" Copied`);
+                const copyDynamicResource = document.getElementById('copy-dynamic-resource').checked;
+                const textToCopy = copyDynamicResource ? `{{DynamicResource ${{name}}}}` : name;
+                navigator.clipboard.writeText(textToCopy).then(() => {{
+                    showToast(`"${{textToCopy}}" Copied`);
                 }}).catch(err => {{
                     console.error('Failed to copy:', err);
                 }});
