@@ -460,9 +460,45 @@ class Generator:
             const container = document.getElementById('grid-container');
             container.innerHTML = '';
 
-            let filteredBrushes = Object.entries(brushes).filter(([name]) =>
-                name.toLowerCase().includes(filterText.toLowerCase())
-            );
+            let filteredBrushes = Object.entries(brushes).filter(([name, values]) => {{
+                // 名前での検索
+                if (name.toLowerCase().includes(filterText.toLowerCase())) {{
+                    return true;
+                }}
+
+                // 透明度での検索（例: 100, >30, <50, >=20, <=80）
+                const opacityMatch = filterText.match(/^([<>]=?|==)(\\d+)$/);
+                if (opacityMatch) {{
+                    const operator = opacityMatch[1];
+                    const targetOpacity = parseInt(opacityMatch[2], 10);
+                    const lightOpacity = Math.round(values.light_alpha * 100);
+                    const darkOpacity = Math.round(values.dark_alpha * 100);
+
+                    switch (operator) {{
+                        case '>':
+                            return lightOpacity > targetOpacity || darkOpacity > targetOpacity;
+                        case '<':
+                            return lightOpacity < targetOpacity || darkOpacity < targetOpacity;
+                        case '>=':
+                            return lightOpacity >= targetOpacity || darkOpacity >= targetOpacity;
+                        case '<=':
+                            return lightOpacity <= targetOpacity || darkOpacity <= targetOpacity;
+                        case '==':
+                            return lightOpacity === targetOpacity || darkOpacity === targetOpacity;
+                    }}
+                }}
+
+                // 数値のみの場合は完全一致
+                const numericMatch = filterText.match(/^(\\d+)$/);
+                if (numericMatch) {{
+                    const targetOpacity = parseInt(numericMatch[1], 10);
+                    const lightOpacity = Math.round(values.light_alpha * 100);
+                    const darkOpacity = Math.round(values.dark_alpha * 100);
+                    return lightOpacity === targetOpacity || darkOpacity === targetOpacity;
+                }}
+
+                return false;
+            }});
 
             // ソート処理
             if (currentSort === 'name') {{
