@@ -159,6 +159,33 @@ class Generator:
             border-color: #0078d4;
         }}
 
+        .sort-buttons {{
+            display: flex;
+            gap: 8px;
+            margin-left: 16px;
+        }}
+
+        .sort-btn {{
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+
+        .sort-btn:hover {{
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }}
+
+        .sort-btn.active {{
+            background-color: #0078d4;
+            color: #fff;
+            border-color: #0078d4;
+        }}
+
         main {{
             padding: 24px;
             max-width: 1400px;
@@ -177,6 +204,7 @@ class Generator:
             padding: 16px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: box-shadow 0.2s;
+            cursor: pointer;
         }}
 
         .brush-card:hover {{
@@ -196,29 +224,29 @@ class Generator:
             gap: 8px;
         }}
 
-        .color-box {{
+        .color-item {{
             flex: 1;
-            height: 60px;
-            border-radius: 4px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-family: monospace;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            gap: 4px;
+        }}
+
+        .color-box {{
+            height: 60px;
+            border-radius: 4px;
         }}
 
         .color-value {{
-            font-size: 10px;
-            margin-bottom: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #333;
+            text-align: center;
+            word-break: break-all;
         }}
 
         .color-label {{
             font-size: 11px;
             color: #666;
-            margin-top: 4px;
             text-align: center;
         }}
 
@@ -228,20 +256,68 @@ class Generator:
             padding: 40px;
             font-size: 14px;
         }}
+
+        .toast {{
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }}
+
+        .toast.show {{
+            opacity: 1;
+            visibility: visible;
+        }}
     </style>
 </head>
 <body>
     <header>
         <h1>WPF Theme Color Cheatsheet</h1>
-        <input type="text" id="search-input" placeholder="ブラシ名で検索..." />
+        <input type="text" id="search-input" placeholder="Search Brushes..." />
+        <div class="sort-buttons">
+            <button class="sort-btn active" id="sort-name" data-sort="name">Sort by Name</button>
+            <button class="sort-btn" id="sort-color" data-sort="color">Sort by Color</button>
+        </div>
     </header>
 
     <main>
         <div id="grid-container"></div>
     </main>
 
+    <div id="toast" class="toast"></div>
+
     <script>
         const brushes = {brushes_json};
+        let currentSort = 'name';
+
+        // 色の明るさを計算する関数（輝度公式を使用）
+        function getBrightness(hexColor) {{
+            // #AARRGGBB または #RRGGBB 形式を解析
+            let r, g, b;
+            if (hexColor.length === 9) {{
+                r = parseInt(hexColor.substring(3, 5), 16);
+                g = parseInt(hexColor.substring(5, 7), 16);
+                b = parseInt(hexColor.substring(7, 9), 16);
+            }} else if (hexColor.length === 7) {{
+                r = parseInt(hexColor.substring(1, 3), 16);
+                g = parseInt(hexColor.substring(3, 5), 16);
+                b = parseInt(hexColor.substring(5, 7), 16);
+            }} else {{
+                return 0;
+            }}
+            // 輝度公式: 0.299*R + 0.587*G + 0.114*B
+            return 0.299 * r + 0.587 * g + 0.114 * b;
+        }}
 
         function createBrushCard(name, lightValue, darkValue, lightValueHtml, darkValueHtml, lightAlpha, darkAlpha) {{
             const card = document.createElement('div');
@@ -254,44 +330,94 @@ class Generator:
             const previewEl = document.createElement('div');
             previewEl.className = 'color-preview';
 
-            const lightBox = document.createElement('div');
-            lightBox.className = 'color-box';
-            lightBox.style.backgroundColor = lightValueHtml;
+            // Light theme color item
+            const lightItem = document.createElement('div');
+            lightItem.className = 'color-item';
 
             const lightValueText = document.createElement('div');
             lightValueText.className = 'color-value';
             const lightOpacity = Math.round(lightAlpha * 100);
             lightValueText.textContent = lightOpacity === 100 ? lightValue : `${{lightValue}} (${{lightOpacity}}%)`;
 
-            lightBox.appendChild(lightValueText);
+            const lightBox = document.createElement('div');
+            lightBox.className = 'color-box';
+            lightBox.style.backgroundColor = lightValueHtml;
 
-            const darkBox = document.createElement('div');
-            darkBox.className = 'color-box';
-            darkBox.style.backgroundColor = darkValueHtml;
+            const lightLabel = document.createElement('div');
+            lightLabel.className = 'color-label';
+            lightLabel.textContent = 'Light';
+
+            lightItem.appendChild(lightValueText);
+            lightItem.appendChild(lightBox);
+            lightItem.appendChild(lightLabel);
+
+            // Dark theme color item
+            const darkItem = document.createElement('div');
+            darkItem.className = 'color-item';
 
             const darkValueText = document.createElement('div');
             darkValueText.className = 'color-value';
             const darkOpacity = Math.round(darkAlpha * 100);
             darkValueText.textContent = darkOpacity === 100 ? darkValue : `${{darkValue}} (${{darkOpacity}}%)`;
 
-            darkBox.appendChild(darkValueText);
+            const darkBox = document.createElement('div');
+            darkBox.className = 'color-box';
+            darkBox.style.backgroundColor = darkValueHtml;
 
-            previewEl.appendChild(lightBox);
-            previewEl.appendChild(darkBox);
+            const darkLabel = document.createElement('div');
+            darkLabel.className = 'color-label';
+            darkLabel.textContent = 'Dark';
+
+            darkItem.appendChild(darkValueText);
+            darkItem.appendChild(darkBox);
+            darkItem.appendChild(darkLabel);
+
+            previewEl.appendChild(lightItem);
+            previewEl.appendChild(darkItem);
 
             card.appendChild(nameEl);
             card.appendChild(previewEl);
 
+            // クリックでクリップボードにコピー
+            card.addEventListener('click', () => {{
+                navigator.clipboard.writeText(name).then(() => {{
+                    showToast(`"${{name}}" Copied`);
+                }}).catch(err => {{
+                    console.error('Failed to copy:', err);
+                }});
+            }});
+
             return card;
+        }}
+
+        function showToast(message) {{
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {{
+                toast.classList.remove('show');
+            }}, 2000);
         }}
 
         function renderBrushes(filterText = '') {{
             const container = document.getElementById('grid-container');
             container.innerHTML = '';
 
-            const filteredBrushes = Object.entries(brushes).filter(([name]) =>
+            let filteredBrushes = Object.entries(brushes).filter(([name]) =>
                 name.toLowerCase().includes(filterText.toLowerCase())
             );
+
+            // ソート処理
+            if (currentSort === 'name') {{
+                filteredBrushes.sort((a, b) => a[0].localeCompare(b[0]));
+            }} else if (currentSort === 'color') {{
+                filteredBrushes.sort((a, b) => {{
+                    const brightnessA = getBrightness(a[1].light_value);
+                    const brightnessB = getBrightness(b[1].light_value);
+                    return brightnessA - brightnessB;
+                }});
+            }}
 
             if (filteredBrushes.length === 0) {{
                 const noResults = document.createElement('div');
@@ -318,6 +444,22 @@ class Generator:
         // 検索入力のイベントリスナー
         document.getElementById('search-input').addEventListener('input', (e) => {{
             renderBrushes(e.target.value);
+        }});
+
+        // ソートボタンのイベントリスナー
+        document.querySelectorAll('.sort-btn').forEach(btn => {{
+            btn.addEventListener('click', (e) => {{
+                const sortType = e.target.dataset.sort;
+                currentSort = sortType;
+
+                // アクティブクラスの切り替え
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // 再描画
+                const searchText = document.getElementById('search-input').value;
+                renderBrushes(searchText);
+            }});
         }});
 
         // 初期表示
