@@ -7,7 +7,15 @@ import os
 class Xaml:
     def __init__(self, path: str):
         self.path = path
-        self.colors = {}
+        self.colors = {
+            "SystemAccentColor": "#FF0063B1",
+            "SystemAccentColorLight1": "#FF007FDC",
+            "SystemAccentColorLight2": "#FF40BDFF",
+            "SystemAccentColorLight3": "#FF9CEBFF",
+            "SystemAccentColorDark1": "#FF0055A1",
+            "SystemAccentColorDark2": "#FF00337C",
+            "SystemAccentColorDark3": "#FF00145A",
+        }
         self.color_brushes = {}
         self._parse_xaml()
 
