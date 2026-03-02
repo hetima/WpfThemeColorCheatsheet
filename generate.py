@@ -417,6 +417,31 @@ class Generator:
             color: #333;
             margin-bottom: 12px;
             word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+
+        .search-btn {{
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ddd;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+            margin-left: 8px;
+            background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='black' stroke-width='1.5'/%3E%3Cline x1='14' y1='14' x2='10.5' y2='10.5' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }}
+
+        .search-btn:hover {{
+            background-color: #e0e0e0;
         }}
 
         .color-preview {{
@@ -546,6 +571,12 @@ class Generator:
         let currentSort = 'name';
         let currentDataset = 'brushes';
 
+        // 検索ワードを保存
+        const searchHistory = {{
+            brushes: '',
+            colors: ''
+        }};
+
         // 検索入力とクリアボタンの設定
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
@@ -553,12 +584,14 @@ class Generator:
         // 入力値に応じてクリアボタンの表示/非表示を切り替え
         searchInput.addEventListener('input', (e) => {{
             clearBtn.style.display = searchInput.value ? 'flex' : 'none';
+            searchHistory[currentDataset] = searchInput.value;
             renderBrushes(searchInput.value);
         }});
 
         // クリアボタンクリックで検索をクリア
         clearBtn.addEventListener('click', () => {{
             searchInput.value = '';
+            searchHistory[currentDataset] = '';
             clearBtn.style.display = 'none';
             renderBrushes();
             searchInput.focus();
@@ -568,18 +601,52 @@ class Generator:
         document.addEventListener('keydown', (e) => {{
             if (e.key === 'Escape' && searchInput.value) {{
                 searchInput.value = '';
+                searchHistory[currentDataset] = '';
                 clearBtn.style.display = 'none';
                 renderBrushes();
             }}
         }});
 
-        function createBrushCard(name, lightValue, darkValue, lightValueHtml, darkValueHtml, lightAlpha, darkAlpha) {{
+        function createBrushCard(name, lightValue, darkValue, lightValueHtml, darkValueHtml, lightAlpha, darkAlpha, colorName = null) {{
             const card = document.createElement('div');
             card.className = 'brush-card';
 
             const nameEl = document.createElement('div');
             nameEl.className = 'brush-name';
-            nameEl.textContent = name;
+
+            const nameText = document.createElement('span');
+            nameText.textContent = name;
+            nameEl.appendChild(nameText);
+
+            // 検索ボタン
+            const searchBtn = document.createElement('button');
+            searchBtn.className = 'search-btn';
+            if (currentDataset === 'brushes' && colorName) {{
+                // brushesモード: c:"color_name"で検索
+                searchBtn.title = `Search for c:"${{colorName}}"`;
+                searchBtn.addEventListener('click', (e) => {{
+                    e.stopPropagation(); // カードのクリックイベントを防止
+                    searchInput.value = `c:"${{colorName}}"`;
+                    searchHistory[currentDataset] = searchInput.value;
+                    clearBtn.style.display = 'flex';
+                    renderBrushes(searchInput.value);
+                }});
+            }} else {{
+                // colorsモード: brushモードに切り替えてnameで検索
+                searchBtn.title = `Switch to Brushes and search for "${{name}}"`;
+                searchBtn.addEventListener('click', (e) => {{
+                    e.stopPropagation(); // カードのクリックイベントを防止
+                    currentDataset = 'brushes';
+                    document.querySelectorAll('.dataset-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.dataset-btn[data-dataset="brushes"]').classList.add('active');
+                    searchInput.placeholder = 'Search Brushes...';
+                    searchInput.value = `c:"${{name}}"`;
+                    searchHistory[currentDataset] = searchInput.value;
+                    clearBtn.style.display = 'flex';
+                    renderBrushes(searchInput.value);
+                }});
+            }}
+            nameEl.appendChild(searchBtn);
 
             const previewEl = document.createElement('div');
             previewEl.className = 'color-preview';
@@ -753,6 +820,7 @@ class Generator:
             }}
 
             filteredBrushes.forEach(([name, values]) => {{
+                const colorName = currentDataset === 'brushes' ? (values.color_name || null) : null;
                 const card = createBrushCard(
                     name,
                     values.light_value,
@@ -760,7 +828,8 @@ class Generator:
                     values.light_value_html,
                     values.dark_value_html,
                     values.light_alpha,
-                    values.dark_alpha
+                    values.dark_alpha,
+                    colorName
                 );
                 container.appendChild(card);
             }});
@@ -780,9 +849,12 @@ class Generator:
                 const searchInput = document.getElementById('search-input');
                 searchInput.placeholder = currentDataset === 'brushes' ? 'Search Brushes...' : 'Search Colors...';
 
+                // 検索ワードを切り替え
+                searchInput.value = searchHistory[currentDataset];
+                clearBtn.style.display = searchInput.value ? 'flex' : 'none';
+
                 // 再描画
-                const searchText = searchInput.value;
-                renderBrushes(searchText);
+                renderBrushes(searchInput.value);
             }});
         }});
 
