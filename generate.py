@@ -139,7 +139,8 @@ class Generator:
                 "dark_value_html": dark_rgba,
                 "light_alpha": light_alpha,
                 "dark_alpha": dark_alpha,
-                "light_brightness": light_brightness
+                "light_brightness": light_brightness,
+                "color_name": light_color_key
             }
 
     def construct_colors(self):
@@ -673,6 +674,26 @@ class Generator:
             const currentData = currentDataset === 'brushes' ? brushes : colors;
 
             let filteredBrushes = Object.entries(currentData).filter(([name, values]) => {{
+                // c:"xxx"形式でcolor_nameを完全一致検索（brushesのみ）
+                const colorNameExactMatch = filterText.match(/^c:"(.+)"$/);
+                if (colorNameExactMatch && currentDataset === 'brushes') {{
+                    const colorName = values.color_name;
+                    if (colorName && colorName.toLowerCase() === colorNameExactMatch[1].toLowerCase()) {{
+                        return true;
+                    }}
+                    return false;
+                }}
+
+                // c:xxx形式でcolor_nameを部分一致検索（brushesのみ）
+                const colorNameMatch = filterText.match(/^c:(.+)$/);
+                if (colorNameMatch && currentDataset === 'brushes') {{
+                    const colorName = values.color_name;
+                    if (colorName && colorName.toLowerCase().includes(colorNameMatch[1].toLowerCase())) {{
+                        return true;
+                    }}
+                    return false;
+                }}
+
                 // 名前での検索
                 if (name.toLowerCase().includes(filterText.toLowerCase())) {{
                     return true;
